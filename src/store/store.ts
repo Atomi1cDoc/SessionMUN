@@ -381,24 +381,6 @@ export const actions = {
     });
   },
 
-  /** Drag-and-drop reorder: moves `entryId` to sit immediately before `targetEntryId`
-   *  in the queue. Both must currently be 'queued' — dragging never touches the
-   *  current speaker or already-spoken entries. */
-  moveGslSpeakerTo(sessionId: string, entryId: string, targetEntryId: string) {
-    update((d) => {
-      const s = findSession(d, sessionId);
-      if (!s || entryId === targetEntryId) return;
-      const queue = s.gslQueue;
-      const from = queue.find((e) => e.id === entryId);
-      const target = queue.find((e) => e.id === targetEntryId);
-      if (!from || !target || from.status !== 'queued' || target.status !== 'queued') return;
-      const fromIdx = queue.indexOf(from);
-      queue.splice(fromIdx, 1);
-      const toIdx = queue.indexOf(target);
-      queue.splice(toIdx, 0, from);
-    });
-  },
-
   /**
    * Advance GSL: current speaker -> spoken (awarded purely from speaking time,
    * no separate flat bonus), next queued -> speaking. `gslYield` reflects how
