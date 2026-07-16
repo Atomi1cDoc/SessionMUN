@@ -212,9 +212,13 @@ input, textarea, select { font-family: inherit; font-size: 15px; }
 .panel-head h3 { margin: 0; }
 .panel-head .spacer { min-width: 0; }
 
-.speaker-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line); margin-bottom: 8px; }
+.speaker-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--line); margin-bottom: 8px; transition: opacity 0.1s, border-color 0.1s; }
 .speaker-row.speaking { border-color: var(--gold); background: #fdf7ec; }
 .speaker-row .order { color: var(--muted); font-weight: 700; width: 20px; }
+.speaker-row.dragging { opacity: 0.4; }
+.speaker-row.drag-over { border-color: var(--gold-dark); border-style: dashed; background: #fbf1de; }
+.drag-handle { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.drag-handle:active { cursor: grabbing; }
 
 .add-list { max-height: 300px; overflow-y: auto; }
 .add-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; }

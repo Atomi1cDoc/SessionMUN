@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Session, Delegate } from '../../types';
 import { actions, type GslYield } from '../../store/store';
 import { Flag } from '../../components/Flag';
@@ -66,6 +66,40 @@ export function GslTab({
 
   const warn = timer.remaining <= 10;
 
+  // Pointer-based drag-and-drop reorder of the Upcoming Speakers list — grab the
+  // order chip and drop it on another row. Uses Pointer Events (not native HTML5
+  // drag-and-drop) so it works on touch devices too, since mobile browsers don't
+  // fire native drag events without a polyfill.
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const rowRefs = useRef(new Map<string, HTMLDivElement>());
+
+  const rowAtPoint = (clientY: number): string | null => {
+    for (const [id, el] of rowRefs.current) {
+      const rect = el.getBoundingClientRect();
+      if (clientY >= rect.top && clientY <= rect.bottom) return id;
+    }
+    return null;
+  };
+
+  const startDrag = (e: ReactPointerEvent, id: string) => {
+    if (readOnly) return;
+    setDragId(id);
+    setOverId(id);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const dragMove = (e: ReactPointerEvent) => {
+    if (!dragId) return;
+    setOverId(rowAtPoint(e.clientY));
+  };
+  const dragEnd = () => {
+    if (dragId && overId && overId !== dragId) {
+      actions.moveGslSpeakerTo(session.id, dragId, overId);
+    }
+    setDragId(null);
+    setOverId(null);
+  };
+
   return (
     <>
       <div className="timer-card">
@@ -123,8 +157,28 @@ export function GslTab({
             <div className="muted" style={{ fontSize: 14 }}>Queue is empty.</div>
           ) : (
             upcoming.map((e, i) => (
-              <div key={e.id} className="speaker-row">
-                <span className="order">{i + 1}</span>
+              <div
+                key={e.id}
+                ref={(el) => {
+                  if (el) rowRefs.current.set(e.id, el);
+                  else rowRefs.current.delete(e.id);
+                }}
+                className={classNames(
+                  'speaker-row',
+                  dragId === e.id && 'dragging',
+                  overId === e.id && dragId !== null && dragId !== e.id && 'drag-over',
+                )}
+              >
+                <span
+                  className="order drag-handle"
+                  title="Drag to reorder"
+                  onPointerDown={(ev) => startDrag(ev, e.id)}
+                  onPointerMove={dragMove}
+                  onPointerUp={dragEnd}
+                  onPointerCancel={dragEnd}
+                >
+                  {i + 1}
+                </span>
                 <Flag delegate={byId.get(e.delegateId)!} size={18} />
                 <span>{byId.get(e.delegateId)?.countryName}</span>
                 {!readOnly && (
