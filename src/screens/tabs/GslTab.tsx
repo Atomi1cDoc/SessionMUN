@@ -7,6 +7,7 @@ import { formatClock, classNames } from '../../lib/util';
 import { useTimer } from '../../components/useTimer';
 import {
   IconPeople, IconGear, IconRefresh, IconPlay, IconPause, IconPlus, IconChevronRight, IconCheck, IconClose,
+  IconChevronUp, IconChevronDown,
 } from '../../components/icons';
 
 export function GslTab({
@@ -128,7 +129,27 @@ export function GslTab({
                 <Flag delegate={byId.get(e.delegateId)!} size={18} />
                 <span>{byId.get(e.delegateId)?.countryName}</span>
                 {!readOnly && (
-                  <button className="icon-btn" style={{ marginLeft: 'auto' }} onClick={() => actions.removeGslSpeaker(session.id, e.id)}>✕</button>
+                  <div className="row" style={{ marginLeft: 'auto', gap: 2 }}>
+                    <button
+                      className="icon-btn"
+                      style={{ width: 30, height: 30 }}
+                      disabled={i === 0}
+                      title="Move up"
+                      onClick={() => actions.moveGslSpeaker(session.id, e.id, 'up')}
+                    >
+                      <IconChevronUp size={16} />
+                    </button>
+                    <button
+                      className="icon-btn"
+                      style={{ width: 30, height: 30 }}
+                      disabled={i === upcoming.length - 1}
+                      title="Move down"
+                      onClick={() => actions.moveGslSpeaker(session.id, e.id, 'down')}
+                    >
+                      <IconChevronDown size={16} />
+                    </button>
+                    <button className="icon-btn" style={{ width: 30, height: 30 }} title="Remove" onClick={() => actions.removeGslSpeaker(session.id, e.id)}>✕</button>
+                  </div>
                 )}
               </div>
             ))

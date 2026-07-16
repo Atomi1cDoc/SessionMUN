@@ -381,6 +381,24 @@ export const actions = {
     });
   },
 
+  /** Swaps a queued speaker with the one immediately above/below it in the Upcoming list. */
+  moveGslSpeaker(sessionId: string, entryId: string, direction: 'up' | 'down') {
+    update((d) => {
+      const s = findSession(d, sessionId);
+      if (!s) return;
+      const queuedIndices = s.gslQueue
+        .map((e, i) => (e.status === 'queued' ? i : -1))
+        .filter((i) => i !== -1);
+      const pos = queuedIndices.findIndex((i) => s.gslQueue[i].id === entryId);
+      if (pos === -1) return;
+      const swapPos = direction === 'up' ? pos - 1 : pos + 1;
+      if (swapPos < 0 || swapPos >= queuedIndices.length) return;
+      const a = queuedIndices[pos];
+      const b = queuedIndices[swapPos];
+      [s.gslQueue[a], s.gslQueue[b]] = [s.gslQueue[b], s.gslQueue[a]];
+    });
+  },
+
   /**
    * Advance GSL: current speaker -> spoken (awarded purely from speaking time,
    * no separate flat bonus), next queued -> speaking. `gslYield` reflects how

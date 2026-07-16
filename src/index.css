@@ -42,6 +42,7 @@ body {
 }
 
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
 input, textarea, select { font-family: inherit; font-size: 15px; }
 
 .app-root { max-width: 1180px; margin: 0 auto; min-height: 100%; }
