@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import type { Session, Delegate } from '../../types';
+import { useEffect, useMemo, useState } from 'react';
+import { Reorder } from 'framer-motion';
+import type { Session, Delegate, SpeakerListEntry } from '../../types';
 import { actions, type GslYield } from '../../store/store';
 import { Flag } from '../../components/Flag';
 import { Modal } from '../../components/Modal';
@@ -119,20 +120,7 @@ export function GslTab({
           )}
 
           <h3 style={{ marginTop: 18 }}>Upcoming Speakers</h3>
-          {upcoming.length === 0 ? (
-            <div className="muted" style={{ fontSize: 14 }}>Queue is empty.</div>
-          ) : (
-            upcoming.map((e, i) => (
-              <div key={e.id} className="speaker-row">
-                <span className="order">{i + 1}</span>
-                <Flag delegate={byId.get(e.delegateId)!} size={18} />
-                <span>{byId.get(e.delegateId)?.countryName}</span>
-                {!readOnly && (
-                  <button className="icon-btn" style={{ marginLeft: 'auto' }} onClick={() => actions.removeGslSpeaker(session.id, e.id)}>✕</button>
-                )}
-              </div>
-            ))
-          )}
+          <UpcomingSpeakers sessionId={session.id} upcoming={upcoming} byId={byId} readOnly={readOnly} />
         </div>
 
         <div className="panel">
@@ -181,6 +169,68 @@ export function GslTab({
         />
       )}
     </>
+  );
+}
+
+/**
+ * Drag-to-reorder Upcoming Speakers list, built on Framer Motion's `Reorder`
+ * rather than hand-rolled drag math: `items` is local UI state so the list
+ * reflows live (other chips animate out of the way) as you drag, and we only
+ * write the final order back to the store once, on release.
+ */
+function UpcomingSpeakers({
+  sessionId, upcoming, byId, readOnly,
+}: { sessionId: string; upcoming: SpeakerListEntry[]; byId: Map<string, Delegate>; readOnly: boolean }) {
+  const [items, setItems] = useState(upcoming);
+
+  // Re-sync from the store when the queued set actually changes (add/remove/
+  // promote a speaker) — not on every render, so it never fights an in-flight drag.
+  // Keyed on the id sequence, not the `upcoming` array reference itself, so an
+  // unrelated re-render mid-drag never resets this from under the user's hand.
+  const idsKey = upcoming.map((e) => e.id).join(',');
+  useEffect(() => {
+    setItems(upcoming);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on idsKey, not upcoming
+  }, [idsKey]);
+
+  if (upcoming.length === 0) {
+    return <div className="muted" style={{ fontSize: 14 }}>Queue is empty.</div>;
+  }
+
+  const commit = (ordered: SpeakerListEntry[]) => {
+    actions.setGslQueueOrder(sessionId, ordered.map((e) => e.id));
+  };
+
+  return (
+    <Reorder.Group as="div" axis="y" values={items} onReorder={setItems} className="speaker-queue">
+      {items.map((e, i) => (
+        <Reorder.Item
+          key={e.id}
+          value={e}
+          as="div"
+          drag={!readOnly}
+          dragListener={!readOnly}
+          onDragEnd={() => commit(items)}
+          whileDrag={{ scale: 1.03, boxShadow: '0 10px 30px rgba(76,12,12,0.28)', zIndex: 20 }}
+          className="speaker-row"
+          style={{ cursor: readOnly ? 'default' : 'grab' }}
+        >
+          <span className="order">{i + 1}</span>
+          <Flag delegate={byId.get(e.delegateId)!} size={18} />
+          <span>{byId.get(e.delegateId)?.countryName}</span>
+          {!readOnly && (
+            <button
+              className="icon-btn"
+              style={{ marginLeft: 'auto' }}
+              onPointerDown={(ev) => ev.stopPropagation()}
+              onClick={() => actions.removeGslSpeaker(sessionId, e.id)}
+            >
+              ✕
+            </button>
+          )}
+        </Reorder.Item>
+      ))}
+    </Reorder.Group>
   );
 }
 

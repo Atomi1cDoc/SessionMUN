@@ -382,6 +382,27 @@ export const actions = {
   },
 
   /**
+   * Commits a drag-reordered Upcoming Speakers list. `orderedEntryIds` must be
+   * exactly the current 'queued' entries, in their new order — the current
+   * speaker and already-spoken entries keep their existing positions and are
+   * untouched. Called once per drag, on release (the live reordering while
+   * dragging is purely local UI state — see GslTab).
+   */
+  setGslQueueOrder(sessionId: string, orderedEntryIds: string[]) {
+    update((d) => {
+      const s = findSession(d, sessionId);
+      if (!s) return;
+      const queuedCount = s.gslQueue.filter((e) => e.status === 'queued').length;
+      if (orderedEntryIds.length !== queuedCount) return; // safety: must match exactly, or skip
+      const byId = new Map(s.gslQueue.map((e) => [e.id, e]));
+      const reordered = orderedEntryIds.map((id) => byId.get(id));
+      if (reordered.some((e) => !e || e.status !== 'queued')) return;
+      let i = 0;
+      s.gslQueue = s.gslQueue.map((e) => (e.status === 'queued' ? reordered[i++]! : e));
+    });
+  },
+
+  /**
    * Advance GSL: current speaker -> spoken (awarded purely from speaking time,
    * no separate flat bonus), next queued -> speaking. `gslYield` reflects how
    * the delegate yielded: POI (+1/-1 for how well they handled it), yielding
