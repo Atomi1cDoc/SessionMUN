@@ -108,21 +108,36 @@ function CaucusRunner({
     actions.endCaucus(session.id, which);
   };
 
-  const primaryRemaining = isMod ? per.remaining : total.remaining;
-  const primaryTotal = isMod ? (caucus.perSpeakerSeconds ?? 60) : caucus.totalSeconds;
-  const warn = primaryRemaining <= 10;
-
   return (
     <>
+      {isMod && (
+        <div className="timer-topic">Topic: {caucus.topic || <span className="muted">—</span>}</div>
+      )}
+
       <div className="timer-card">
-        {isMod && caucus.topic && <div className="chip" style={{ marginBottom: 10 }}>{caucus.topic}</div>}
-        <div className={classNames('timer-display', warn && 'warn')}>
-          {formatClock(primaryRemaining)} <span className="total">/ {formatClock(primaryTotal)}</span>
+        <div className={classNames('timer-display', total.remaining <= 10 && 'warn')}>
+          {formatClock(total.remaining)} <span className="total">/ {formatClock(caucus.totalSeconds)}</span>
         </div>
-        <div className="muted" style={{ marginTop: 4 }}>
-          {isMod ? 'Per-speaker time' : 'Unmoderated caucus'} · Total left: <strong>{formatClock(total.remaining)}</strong>
-        </div>
-        <div className="control-row">
+
+        {isMod ? (
+          <>
+            <div className="timer-divider" />
+            <div className={classNames('timer-display', per.remaining <= 10 && 'warn')}>
+              {formatClock(per.remaining)} <span className="total">/ {formatClock(caucus.perSpeakerSeconds ?? 60)}</span>
+            </div>
+          </>
+        ) : (
+          <div className="progress-track" style={{ marginTop: 20 }}>
+            <div
+              className={classNames('progress-fill', total.remaining <= 10 && 'urgent')}
+              style={{
+                width: `${caucus.totalSeconds > 0 ? Math.min(100, Math.max(0, ((caucus.totalSeconds - total.remaining) / caucus.totalSeconds) * 100)) : 100}%`,
+              }}
+            />
+          </div>
+        )}
+
+        <div className="control-row" style={{ marginTop: 20 }}>
           <button className="square-btn sq-blue" onClick={() => { total.reset(caucus.remainingSeconds); per.reset(caucus.perSpeakerSeconds ?? 60); }} title="Reset"><IconRefresh /></button>
           <button className="square-btn sq-play" disabled={readOnly} onClick={toggle} title="Start / pause">
             {running ? <IconPause /> : <IconPlay />}

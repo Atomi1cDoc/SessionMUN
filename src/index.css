@@ -171,7 +171,7 @@ input, textarea, select { font-family: inherit; font-size: 15px; }
 .quorum .q-total .circle { border-color: rgba(255,255,255,0.55); color: #fff; }
 .quorum small { font-size: 10px; opacity: 0.8; margin-top: 3px; text-transform: uppercase; letter-spacing: .03em; }
 
-.live-body { flex: 1; padding: 18px 16px 96px; }
+.live-body { flex: 1; padding: 18px 24px 96px; max-width: 1800px; }
 
 .bottom-nav {
   position: sticky; bottom: 0;
@@ -188,7 +188,13 @@ input, textarea, select { font-family: inherit; font-size: 15px; }
 
 /* timer card + controls (shared GSL / caucus / single speaker) — full-width,
    no dead space on either side; the number is the focal point of the card. */
-.timer-card { border: 2px solid var(--line); border-radius: var(--radius); background: #fff; padding: 22px 20px; text-align: center; }
+.timer-card { border-radius: var(--radius); background: #fff; box-shadow: var(--shadow); padding: 26px 24px; text-align: center; }
+.timer-divider { height: 1px; background: var(--line); margin: 16px 0; }
+.timer-topic { font-size: 15px; font-weight: 700; color: var(--navy); margin: 0 0 12px; }
+
+.progress-track { height: 14px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--gold), var(--gold-dark)); transition: width 1s linear, background 0.3s; }
+.progress-fill.urgent { background: linear-gradient(90deg, var(--red), #a83630); }
 .timer-display { font-size: clamp(44px, 9vw, 76px); font-weight: 800; color: var(--navy); font-variant-numeric: tabular-nums; letter-spacing: 1px; line-height: 1; }
 .timer-display .total { color: var(--muted); font-weight: 600; }
 .timer-display.warn { color: var(--red); }
