@@ -122,6 +122,15 @@ function findSession(data: AppData, id: string): Session | undefined {
   return data.sessions.find((s) => s.id === id);
 }
 
+/** If nobody in the GSL queue is currently 'speaking' but someone is waiting,
+ *  promote the first queued entry. Guards against ever getting stuck with a
+ *  non-empty queue and no active speaker (see `addGslSpeaker`). */
+function promoteGslIfIdle(s: Session) {
+  if (s.gslQueue.some((e) => e.status === 'speaking')) return;
+  const next = s.gslQueue.find((e) => e.status === 'queued');
+  if (next) next.status = 'speaking';
+}
+
 /** A session counts as reviewed once every roster delegate has at least one comment on it. */
 export function isSessionFullyReviewed(data: AppData, session: Session): boolean {
   const event = findEvent(data, session.munEventId);
@@ -155,6 +164,9 @@ function pushScore(
 export const actions = {
   async hydrate() {
     const data = await loadAppData();
+    // Self-heal any session saved before the addGslSpeaker promotion fix —
+    // a non-empty queue with nobody 'speaking' would otherwise stay stuck forever.
+    for (const s of data.sessions) promoteGslIfIdle(s);
     let route: Route = { name: 'setup' };
     const activeId = cookies.get(ACTIVE_EVENT_COOKIE);
     const targetEventId = activeId && data.events.some((e) => e.id === activeId)
@@ -382,7 +394,7 @@ export const actions = {
       s.gslQueue.push({
         id: uid('sp'),
         delegateId,
-        status: anySpeaking ? 'queued' : s.gslQueue.length === 0 ? 'speaking' : 'queued',
+        status: anySpeaking ? 'queued' : 'speaking',
         order: s.gslQueue.length,
       });
     });
@@ -391,7 +403,9 @@ export const actions = {
   removeGslSpeaker(sessionId: string, entryId: string) {
     update((d) => {
       const s = findSession(d, sessionId);
-      if (s) s.gslQueue = s.gslQueue.filter((e) => e.id !== entryId);
+      if (!s) return;
+      s.gslQueue = s.gslQueue.filter((e) => e.id !== entryId);
+      promoteGslIfIdle(s);
     });
   },
 
