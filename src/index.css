@@ -137,6 +137,7 @@ input, textarea, select { font-family: inherit; font-size: 15px; }
 .status-dot { width: 9px; height: 9px; border-radius: 50%; }
 .dot-inProgress { background: var(--green); box-shadow: 0 0 0 3px rgba(46,158,107,.2); }
 .dot-ended { background: var(--muted); }
+.dot-pending { background: var(--red); box-shadow: 0 0 0 3px rgba(208,69,63,.2); }
 
 /* ---------------- live session ---------------- */
 .live { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg); }

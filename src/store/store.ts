@@ -131,7 +131,7 @@ export function isSessionFullyReviewed(data: AppData, session: Session): boolean
 
 function findUnreviewedEndedSession(data: AppData, eventId: string): Session | undefined {
   return data.sessions.find(
-    (s) => s.munEventId === eventId && s.status === 'ended' && !isSessionFullyReviewed(data, s),
+    (s) => s.munEventId === eventId && s.status === 'ended' && !s.reviewSkipped && !isSessionFullyReviewed(data, s),
   );
 }
 
@@ -311,6 +311,20 @@ export const actions = {
       }
     });
     updateUI((ui) => ({ ...ui, route: { name: 'review', sessionId } }));
+  },
+
+  /** Bypasses the forced review gate for any delegates not yet reviewed —
+   *  existing comments are untouched. Home flags the session as having
+   *  reviews pending (red) until the chair comes back and finishes them. */
+  skipRemainingReview(sessionId: string) {
+    let munEventId = '';
+    update((d) => {
+      const s = findSession(d, sessionId);
+      if (!s) return;
+      s.reviewSkipped = true;
+      munEventId = s.munEventId;
+    });
+    if (munEventId) actions.go({ name: 'home', eventId: munEventId });
   },
 
   setAgenda(sessionId: string, agenda: string) {

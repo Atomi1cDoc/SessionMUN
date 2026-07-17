@@ -74,6 +74,19 @@ export function ReviewMode({ sessionId }: { sessionId: string }) {
         >
           {allDone ? 'Finish Review & Return Home' : `${remaining.length} delegate${remaining.length === 1 ? '' : 's'} remaining`}
         </button>
+        {!allDone && (
+          <button
+            className="btn btn-ghost btn-block"
+            style={{ marginTop: 8 }}
+            onClick={() => {
+              if (confirm(`Skip review for the remaining ${remaining.length} delegate${remaining.length === 1 ? '' : 's'}? You can come back and finish from Home later — nothing already reviewed is lost.`)) {
+                actions.skipRemainingReview(sessionId);
+              }
+            }}
+          >
+            Skip remaining reviews
+          </button>
+        )}
       </div>
     </div>
   );

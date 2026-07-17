@@ -91,6 +91,9 @@ export interface Session {
   status: 'notStarted' | 'inProgress' | 'ended';
   startedAt?: number;
   endedAt?: number;
+  /** Chair explicitly bypassed the forced per-delegate review gate — Home still
+   *  flags this session as having reviews pending until they're finished. */
+  reviewSkipped?: boolean;
   rollCall: Record<string, RollCallStatus>;
   rollCallDone: boolean;
   agendaItem?: string;

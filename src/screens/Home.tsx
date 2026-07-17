@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { actions, useStore } from '../store/store';
+import { actions, isSessionFullyReviewed, useStore } from '../store/store';
 import { Flag } from '../components/Flag';
 import { IconPlay, IconTrophy, IconDownload, IconUpload, IconChevronRight, IconPlus } from '../components/icons';
 import { exportAppData, parseImportedData } from '../lib/persistence';
@@ -175,20 +175,28 @@ export function Home({ eventId }: { eventId: string }) {
 
 function SessionRow({ session }: { session: Session }) {
   const ended = session.status === 'ended';
+  const data = useStore((s) => s.data);
+  const reviewPending = ended && !isSessionFullyReviewed(data, session);
+
   return (
     <div className="session-item">
-      <span className={`status-dot ${ended ? 'dot-ended' : 'dot-inProgress'}`} />
+      <span className={`status-dot ${ended ? (reviewPending ? 'dot-pending' : 'dot-ended') : 'dot-inProgress'}`} />
       <div className="stack">
         <strong>{session.label}</strong>
         <span className="muted" style={{ fontSize: 12 }}>
           {ended
-            ? `Ended ${session.endedAt ? new Date(session.endedAt).toLocaleString() : ''}`
+            ? reviewPending
+              ? 'Reviews pending'
+              : `Ended ${session.endedAt ? new Date(session.endedAt).toLocaleString() : ''}`
             : 'In progress'}
         </span>
       </div>
       <div className="spacer" />
       {ended ? (
-        <button className="btn btn-outline btn-sm" onClick={() => actions.openSession(session.id, true)}>
+        <button
+          className="btn btn-outline btn-sm"
+          onClick={() => (reviewPending ? actions.go({ name: 'review', sessionId: session.id }) : actions.openSession(session.id, true))}
+        >
           Review <IconChevronRight size={16} />
         </button>
       ) : (
